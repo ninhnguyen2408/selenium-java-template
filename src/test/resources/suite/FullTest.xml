@@ -1,0 +1,16 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="FullTest" verbose="1">
+    <parameter name="BROWSER" value="chrome"></parameter>
+
+    <test name="Run All Test Cases">
+        <classes>
+            <class name="AT04_CMS.testcases.LoginTest"></class>
+            <class name="AT04_CMS.testcases.DashboardTest"></class>
+            <class name="AT04_CMS.testcases.BrandTest"></class>
+            <class name="AT04_CMS.testcases.CategoryTest"></class>
+            <class name="AT04_CMS.testcases.ProductTest"></class>
+            <class name="AT04_CMS.testcases.FlowTest"></class>
+        </classes>
+    </test>
+</suite>
