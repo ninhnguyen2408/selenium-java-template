@@ -24,7 +24,7 @@ public class DashboardPage {
       public void clickMenuProducts() {
             verifyDashboardPage();
             WebUI.clickElement(menuProducts);
-            WebUI.sleep(2);
+            WebUI.waitForElementVisible(menuAllProducts);
       }
 
       public ProductPage navigateToProductPage() {

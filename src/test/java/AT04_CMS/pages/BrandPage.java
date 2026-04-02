@@ -4,7 +4,6 @@ import drivers.DriverManager;
 import helpers.ExcelHelper;
 import helpers.PropertiesHelper;
 import helpers.SystemHelper;
-import keywords.WebUI;
 import org.openqa.selenium.By;
 import org.testng.Assert;
 
@@ -68,9 +67,9 @@ public class BrandPage {
       public void verifyAddBrandSuccess() {
             waitForPageLoaded();
             setFileExcel();
+            waitForElementVisible(notifyMessage);
             Assert.assertTrue(getWebElement(notifyMessage).isDisplayed(), "Notify Add new brand success is NOT displayed");
-            WebUI.sleep(2);
-            assertEquals(getTextElement(notifyMessage), excelHelper.getCellData(6, 3), "Content of notify add new brand sucessful NOT match");
+            assertEquals(getTextElement(notifyMessage), excelHelper.getCellData(6, 3), "Content of notify add new brand successful NOT match");
       }
 
       public void verifyNameRequiredField() {
@@ -87,15 +86,16 @@ public class BrandPage {
             clickElement(deleteBrand);
             verifyDeleteConfirmation();
             clickElement(buttonDelete);
-            sleep(2);
-            assertEquals(getTextElement(alertMessage), excelHelper.getCellData(6, 6), "Content of alert message delete sucessful NOT match");
+            waitForPageLoaded();
+            waitForElementVisible(alertMessage);
+            assertEquals(getTextElement(alertMessage), excelHelper.getCellData(6, 6), "Content of alert message delete successful NOT match");
       }
 
       private void verifyDeleteConfirmation() {
-            checkElementDisplayed(headerDeleteForm);
-            sleep(2);
+            waitForElementVisible(headerDeleteForm);
+            Assert.assertTrue(checkElementDisplayed(headerDeleteForm), "Delete confirmation dialog is NOT displayed");
             assertEquals(getTextElement(confirmMessage), excelHelper.getCellData(6, 5), "Content of confirm message delete NOT match");
-            checkElementEnable(buttonDelete);
+            Assert.assertTrue(checkElementEnable(buttonDelete), "Button Delete is NOT enabled");
       }
 
 }

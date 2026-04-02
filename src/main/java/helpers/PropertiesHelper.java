@@ -18,20 +18,22 @@ public class PropertiesHelper {
       public static Properties loadAllFiles() {
             LinkedList<String> files = new LinkedList<>();
             // Add tất cả file Properties vào đây theo mẫu
-            files.add("src/test/resources/configs/configs.properties"); //  link từ folder project đến Files
+            files.add("src/test/resources/configs/configs.properties");
 
             try {
                   properties = new Properties();
                   for (String f : files) {
                         Properties tempProp = new Properties();
                         linkFile = SystemHelper.getCurrentDir() + f;
-                        file = new FileInputStream(linkFile);   // đọc Files
-                        tempProp.load(file);
-                        properties.putAll(tempProp);    // đọc tất cả data của Files ghép lại với nhau
+                        try (FileInputStream fis = new FileInputStream(linkFile)) {
+                              tempProp.load(fis);
+                        }
+                        properties.putAll(tempProp);
                   }
                   System.out.println(" Load All Config \uD83D\uDD04");
                   return properties;
             } catch (IOException ioe) {
+                  System.out.println("Failed to load config files: " + ioe.getMessage());
                   return new Properties();
             }
       }

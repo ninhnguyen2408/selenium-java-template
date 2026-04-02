@@ -5,7 +5,6 @@ import drivers.DriverManager;
 import io.qameta.allure.Step;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -65,10 +64,10 @@ public class WebUI {
       public static boolean checkElementExist(By by) {
             List<WebElement> listElement = getWebElements(by);
             if (!listElement.isEmpty()) {
-                  System.out.println("Element " + by + " exists");
+                  LogUtils.info("Element " + by + " exists");
                   return true;
             } else {
-                  System.out.println("Element " + by + " NOT exists");
+                  LogUtils.warn("Element " + by + " NOT exists");
                   return false;
             }
       }
@@ -226,35 +225,29 @@ public class WebUI {
       public static void uploadFileWithLocalForm(By by, String filePath) {
             waitForPageLoaded();
             Actions action = new Actions(DriverManager.getDriver());
-            action.moveToElement(getWebElement(by)).click().perform(); // Click to open form upload
-            sleep(2);
-            // Create Robot class
-            Robot robot = null;
+            action.moveToElement(getWebElement(by)).click().perform();
+            waitForPageLoaded();
+            Robot robot;
             try {
                   robot = new Robot();
             } catch (AWTException e) {
-                  e.printStackTrace();
+                  LogUtils.error("Cannot create Robot instance: " + e.getMessage());
+                  throw new RuntimeException("Robot initialization failed. Check AWT/display environment.", e);
             }
 
-            // Copy File path to Clipboard
+            // Copy File path to Clipboard then paste
             StringSelection str = new StringSelection(filePath);
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(str, null);
-            // Press Control+V to paste
             robot.keyPress(KeyEvent.VK_CONTROL);
             robot.keyPress(KeyEvent.VK_V);
-            // Release the Control V
-            robot.keyRelease(KeyEvent.VK_CONTROL);
             robot.keyRelease(KeyEvent.VK_V);
-            robot.delay(2000);
-            // Press Enter
+            robot.keyRelease(KeyEvent.VK_CONTROL);
+            robot.delay(1500);
             robot.keyPress(KeyEvent.VK_ENTER);
             robot.keyRelease(KeyEvent.VK_ENTER);
 
             LogUtils.info("Upload File with Local Form: " + filePath);
-            // if (ExtentTestManager.getTest() != null) {
-            // logConsole("Upload File with Local Form: " + filePath);
-            // }
-            // AllureManager.saveTextLog("Upload File with Local Form: " + filePath);
+            ExtentTestManager.logMessage(Status.INFO, "Upload File with Local Form: " + filePath);
       }
 
       // Static droplist
@@ -519,26 +512,15 @@ public class WebUI {
 
       // Wait For Page Loaded: chờ trang load xong mới thao tác
       public static void waitForPageLoaded() {
-            WebDriverWait wait = new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(TIMEOUT),
-                        Duration.ofMillis(500));
             JavascriptExecutor js = (JavascriptExecutor) DriverManager.getDriver();
-            // Wait for Javascript to load
-            ExpectedCondition<Boolean> jsLoad = new ExpectedCondition<Boolean>() {
-                  @Override
-                  public Boolean apply(WebDriver driver) {
-                        return js.executeScript("return document.readyState").toString().equals("complete");
-                  }
-            };
-            // Check JS is Ready
             boolean jsReady = js.executeScript("return document.readyState").toString().equals("complete");
-            // Wait Javascript until it is Ready!
             if (!jsReady) {
-                  System.out.println("Javascript is NOT Ready.");
-                  // Wait for Javascript to load
+                  WebDriverWait wait = new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(TIMEOUT),
+                              Duration.ofMillis(500));
                   try {
-                        wait.until(jsLoad);
+                        wait.until(driver -> js.executeScript("return document.readyState").toString().equals("complete"));
                   } catch (Throwable error) {
-                        error.printStackTrace();
+                        LogUtils.error("FAILED. Timeout waiting for page load.");
                         Assert.fail("FAILED. Timeout waiting for page load.");
                   }
             }

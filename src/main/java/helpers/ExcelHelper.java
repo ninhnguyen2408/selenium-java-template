@@ -1,10 +1,8 @@
 package helpers;
 
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.awt.Color;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,244 +13,191 @@ import java.util.Map;
 
 public class ExcelHelper {
 
-      private FileInputStream fis;
-      private FileOutputStream fileOut;
       private Workbook wb;
       private Sheet sh;
       private Cell cell;
       private Row row;
-      private CellStyle cellstyle;
-      private Color mycolor;
+      private CellStyle cachedCellStyle;
       private String excelFilePath;
       private Map<String, Integer> columns = new HashMap<>();
 
-//    chỉ có thể thực hiện trên 1 file
-//    trong file excel chỉ số dòng/cột bắt đầu là 0, lấy ô dữ liệu (get cell data) = tên cột (column) + chỉ số dòng (row)
-
-      // Set file excel
-      public void setExcelFile(String ExcelPath, String SheetName) {
+      // Set file excel — fis có thể đóng ngay sau khi Workbook load vào memory
+      public void setExcelFile(String excelPath, String sheetName) {
             try {
-                  File f = new File(ExcelPath);
+                  File f = new File(excelPath);
                   if (!f.exists()) {
-                        System.out.println("File doesn't exist.");
+                        System.out.println("File doesn't exist: " + excelPath);
+                        return;
                   }
-                  fis = new FileInputStream(ExcelPath);
-                  wb = WorkbookFactory.create(fis);   // tạo ra 1 phiên làm việc cho file chỉ định
-                  sh = wb.getSheet(SheetName);    // lấy data của sheet name chỉ định
-
+                  if (wb != null) {
+                        wb.close();
+                        wb = null;
+                        cachedCellStyle = null;
+                  }
+                  try (FileInputStream fis = new FileInputStream(excelPath)) {
+                        wb = WorkbookFactory.create(fis);
+                  }
+                  sh = wb.getSheet(sheetName);
                   if (sh == null) {
-                        throw new Exception("Sheet name doesn't exist.");
+                        throw new Exception("Sheet name doesn't exist: " + sheetName);
                   }
-                  this.excelFilePath = ExcelPath;
-
-                  //adding all the column header names to the map 'columns'
-                  sh.getRow(0).forEach(cell -> {
-                        columns.put(cell.getStringCellValue(), cell.getColumnIndex());
-                  });
-
+                  this.excelFilePath = excelPath;
+                  columns.clear();
+                  sh.getRow(0).forEach(c -> columns.put(c.getStringCellValue(), c.getColumnIndex()));
             } catch (Exception e) {
                   System.out.println(e.getMessage());
             }
       }
 
-      // Get cell data
+      // Get cell data by column index and row index
       public String getCellData(int columnIndex, int rowIndex) {
             try {
                   cell = sh.getRow(rowIndex).getCell(columnIndex);
-                  String CellData = null;
                   switch (cell.getCellType()) {
                         case STRING:
-                              CellData = cell.getStringCellValue();
-                              break;
+                              return cell.getStringCellValue();
                         case NUMERIC:
                               if (DateUtil.isCellDateFormatted(cell)) {
-                                    CellData = String.valueOf(cell.getDateCellValue());
-                              } else {
-                                    CellData = String.valueOf((long) cell.getNumericCellValue());
+                                    return String.valueOf(cell.getDateCellValue());
                               }
-                              break;
+                              return String.valueOf((long) cell.getNumericCellValue());
                         case BOOLEAN:
-                              CellData = Boolean.toString(cell.getBooleanCellValue());
-                              break;
+                              return Boolean.toString(cell.getBooleanCellValue());
+                        case FORMULA:
+                              return cell.getCellFormula();
                         case BLANK:
-                              CellData = "";
-                              break;
+                        case ERROR:
+                        case _NONE:
+                        default:
+                              return "";
                   }
-                  return CellData;
             } catch (Exception e) {
                   return "";
             }
       }
 
-      //Gọi ra hàm này nè
+      // Get cell data by column name and row index
       public String getCellData(String columnName, int rowIndex) {
             return getCellData(columns.get(columnName), rowIndex);
       }
 
-      //set by column index
+      // Set cell data by column index — dùng lại cachedCellStyle để tránh vượt giới hạn POI
       public void setCellData(String text, int columnIndex, int rowIndex) {
             try {
                   row = sh.getRow(rowIndex);
-                  if (row == null) {
-                        row = sh.createRow(rowIndex);
-                  }
+                  if (row == null) row = sh.createRow(rowIndex);
                   cell = row.getCell(columnIndex);
-
-                  if (cell == null) {
-                        cell = row.createCell(columnIndex);
-                  }
+                  if (cell == null) cell = row.createCell(columnIndex);
                   cell.setCellValue(text);
-
-                  XSSFCellStyle style = (XSSFCellStyle) wb.createCellStyle();
-                  style.setFillPattern(FillPatternType.NO_FILL);
-                  style.setAlignment(HorizontalAlignment.CENTER);
-                  style.setVerticalAlignment(VerticalAlignment.CENTER);
-
-                  cell.setCellStyle(style);
-                  fileOut = new FileOutputStream(excelFilePath);
-                  wb.write(fileOut);
-                  fileOut.flush();
-                  fileOut.close();
+                  cell.setCellStyle(getOrCreateCellStyle());
+                  writeWorkbook();
             } catch (Exception e) {
-                  e.getMessage();
+                  System.out.println(e.getMessage());
             }
       }
 
-      //  Set Cell Data by column name
+      // Set cell data by column name
       public void setCellData(String text, String columnName, int rowIndex) {
-            try {
-                  row = sh.getRow(rowIndex);
-                  if (row == null) {
-                        row = sh.createRow(rowIndex);
-                  }
-                  cell = row.getCell(columns.get(columnName));
-
-                  if (cell == null) {
-                        cell = row.createCell(columns.get(columnName));
-                  }
-                  cell.setCellValue(text);
-                  XSSFCellStyle style = (XSSFCellStyle) wb.createCellStyle();
-                  style.setFillPattern(FillPatternType.NO_FILL);
-                  style.setAlignment(HorizontalAlignment.CENTER);
-                  style.setVerticalAlignment(VerticalAlignment.CENTER);
-
-                  cell.setCellStyle(style);
-                  fileOut = new FileOutputStream(excelFilePath);
-                  wb.write(fileOut);
-                  fileOut.flush();
-                  fileOut.close();
-            } catch (Exception e) {
-                  e.getMessage();
-            }
+            setCellData(text, columns.get(columnName), rowIndex);
       }
 
-      // lấy dữ liệu từ file excel
+      // Lấy dữ liệu từ file excel dùng cho DataProvider
       public Object[][] getExcelData(String filePath, String sheetName) {
-            Object[][] data = null;
-            Workbook workbook = null;
-            try {
-                  // load the file
-                  FileInputStream fis = new FileInputStream(filePath);
-                  // load the workbook
-                  workbook = new XSSFWorkbook(fis);
-                  // load the sheet
-                  Sheet sh = workbook.getSheet(sheetName);
-                  // load the row
-                  Row row = sh.getRow(0);
-                  //
-                  int noOfRows = sh.getPhysicalNumberOfRows();
-                  int noOfCols = row.getLastCellNum();
-                  System.out.println(noOfRows + " - " + noOfCols);
+            try (FileInputStream fis = new FileInputStream(filePath);
+                 Workbook workbook = new XSSFWorkbook(fis)) {
 
-                  Cell cell;
-                  data = new Object[noOfRows - 1][noOfCols];
-                  //
+                  Sheet sheet = workbook.getSheet(sheetName);
+                  Row headerRow = sheet.getRow(0);
+                  int noOfRows = sheet.getPhysicalNumberOfRows();
+                  int noOfCols = headerRow.getLastCellNum();
+                  System.out.println("Rows: " + noOfRows + " - Cols: " + noOfCols);
+
+                  Object[][] data = new Object[noOfRows - 1][noOfCols];
                   for (int i = 1; i < noOfRows; i++) {
+                        Row dataRow = sheet.getRow(i);
                         for (int j = 0; j < noOfCols; j++) {
-                              row = sh.getRow(i);
-                              cell = row.getCell(j);
-
-                              switch (cell.getCellType()) {
+                              Cell c = dataRow.getCell(j);
+                              switch (c.getCellType()) {
                                     case STRING:
-                                          data[i - 1][j] = cell.getStringCellValue();
+                                          data[i - 1][j] = c.getStringCellValue();
                                           break;
                                     case NUMERIC:
-                                          data[i - 1][j] = String.valueOf(cell.getNumericCellValue());
-                                          break;
-                                    case BLANK:
-                                          data[i - 1][j] = cell.getStringCellValue();
+                                          data[i - 1][j] = String.valueOf(c.getNumericCellValue());
                                           break;
                                     default:
-                                          data[i - 1][j] = cell.getStringCellValue();
+                                          data[i - 1][j] = "";
                                           break;
                               }
                         }
                   }
+                  return data;
             } catch (Exception e) {
-                  System.out.println("The exception is:" + e.getMessage());
+                  System.out.println("Exception reading Excel: " + e.getMessage());
                   throw new RuntimeException(e);
             }
-            return data;
       }
 
-      //Hàm này dùng cho trường hợp nhiều Field trong File Excel
-      public int getColumns() {
-            try {
-                  row = sh.getRow(0);
-                  return row.getLastCellNum();
-            } catch (Exception e) {
-                  System.out.println(e.getMessage());
-                  throw (e);
-            }
-      }
-
-      //Get last row number (lấy vị trí dòng cuối cùng tính từ 0)
-      public int getLastRowNum() {
-            return sh.getLastRowNum();
-      }
-
-      //Lấy số dòng có data đang sử dụng
-      public int getPhysicalNumberOfRows() {
-            return sh.getPhysicalNumberOfRows();
-      }
-
+      // Dùng cho trường hợp nhiều Field trong File Excel (Hashtable)
       public Object[][] getDataHashTable(String excelPath, String sheetName, int startRow, int endRow) {
             System.out.println("Excel Path: " + excelPath);
-            Object[][] data = null;
             try {
                   File f = new File(excelPath);
                   if (!f.exists()) {
-                        try {
-                              System.out.println("File Excel path not found.");
-                              throw new IOException("File Excel path not found.");
-                        } catch (Exception e) {
-                              e.printStackTrace();
-                        }
+                        throw new IOException("File Excel path not found: " + excelPath);
                   }
-
-                  fis = new FileInputStream(excelPath);
-                  wb = new XSSFWorkbook(fis);
-                  sh = wb.getSheet(sheetName);
+                  setExcelFile(excelPath, sheetName);
                   int rows = getLastRowNum();
-                  int columns = getColumns();
-
-                  System.out.println("Row: " + rows + " - Column: " + columns);
+                  int cols = getColumns();
+                  System.out.println("Row: " + rows + " - Column: " + cols);
                   System.out.println("StartRow: " + startRow + " - EndRow: " + endRow);
 
-                  data = new Object[(endRow - startRow) + 1][1];
-                  Hashtable<String, String> table = null;
+                  Object[][] data = new Object[(endRow - startRow) + 1][1];
                   for (int rowNums = startRow; rowNums <= endRow; rowNums++) {
-                        table = new Hashtable<>();
-                        for (int colNum = 0; colNum < columns; colNum++) {
+                        Hashtable<String, String> table = new Hashtable<>();
+                        for (int colNum = 0; colNum < cols; colNum++) {
                               table.put(getCellData(colNum, 0), getCellData(colNum, rowNums));
                         }
                         data[rowNums - startRow][0] = table;
                   }
+                  return data;
             } catch (IOException e) {
                   e.printStackTrace();
+                  return new Object[0][0];
             }
-            return data;
       }
 
+      public int getColumns() {
+            try {
+                  return sh.getRow(0).getLastCellNum();
+            } catch (Exception e) {
+                  System.out.println(e.getMessage());
+                  throw e;
+            }
+      }
+
+      public int getLastRowNum() {
+            return sh.getLastRowNum();
+      }
+
+      public int getPhysicalNumberOfRows() {
+            return sh.getPhysicalNumberOfRows();
+      }
+
+      // Tạo CellStyle một lần rồi cache lại — tránh lỗi "too many cell styles" của POI
+      private CellStyle getOrCreateCellStyle() {
+            if (cachedCellStyle == null) {
+                  cachedCellStyle = wb.createCellStyle();
+                  cachedCellStyle.setFillPattern(FillPatternType.NO_FILL);
+                  cachedCellStyle.setAlignment(HorizontalAlignment.CENTER);
+                  cachedCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            }
+            return cachedCellStyle;
+      }
+
+      private void writeWorkbook() throws IOException {
+            try (FileOutputStream fileOut = new FileOutputStream(excelFilePath)) {
+                  wb.write(fileOut);
+            }
+      }
 
 }

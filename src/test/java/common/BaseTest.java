@@ -8,6 +8,8 @@ import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.testng.annotations.*;
 
+import java.time.Duration;
+
 @Listeners(TestListener.class)
 public class BaseTest {
 
@@ -45,27 +47,30 @@ public class BaseTest {
 
       // Viết các hàm khởi chạy cho từng Browser đó
       private WebDriver initChromeDriver() {
-            WebDriver driver;
             System.out.println("\n  \uD83D\uDE80 Launching Chrome browser...");
-            driver = new ChromeDriver();
-            driver.manage().window().maximize();
+            WebDriver driver = new ChromeDriver();
+            configureDriver(driver);
             return driver;
       }
 
       private WebDriver initEdgeDriver() {
-            WebDriver driver;
             System.out.println("\uD83D\uDE80 Launching Edge browser...");
-            driver = new EdgeDriver();
-            driver.manage().window().maximize();
+            WebDriver driver = new EdgeDriver();
+            configureDriver(driver);
             return driver;
       }
 
       private WebDriver initFirefoxDriver() {
-            WebDriver driver;
             System.out.println("\uD83D\uDE80 Launching Firefox browser...");
-            driver = new FirefoxDriver();
-            driver.manage().window().maximize();
+            WebDriver driver = new FirefoxDriver();
+            configureDriver(driver);
             return driver;
+      }
+
+      private void configureDriver(WebDriver driver) {
+            driver.manage().window().maximize();
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0));
       }
 
       @AfterMethod

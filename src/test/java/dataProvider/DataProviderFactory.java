@@ -1,24 +1,22 @@
 package dataProvider;
 
 import helpers.ExcelHelper;
+import helpers.PropertiesHelper;
 import org.testng.annotations.DataProvider;
 
 public class DataProviderFactory {
 
+      private static final String USER_DATA_SHEET = "LoginData";
+
       @DataProvider(name = "DataLogin", parallel = true)
       public Object[][] dataLogin() {
-
             ExcelHelper excelHelper = new ExcelHelper();
-            Object[][] data = excelHelper.getExcelData("src/test/resources/testData/UserData.xlsx", "LoginData");
-            return data;
+            return excelHelper.getExcelData(PropertiesHelper.getValue("USER_DATA_PATH"), USER_DATA_SHEET);
       }
 
       @DataProvider(name = "data_provider_login_excel_hashtable")
       public Object[][] dataLoginHRMFromExcelHashtable() {
             ExcelHelper excelHelper = new ExcelHelper();
-            Object[][] data = excelHelper.getDataHashTable("src/test/resources/testData/UserData.xlsx", "LoginData", 1,
-                        2);
-            System.out.println("Login Data from Excel: " + data);
-            return data;
+            return excelHelper.getDataHashTable(PropertiesHelper.getValue("USER_DATA_PATH"), USER_DATA_SHEET, 1, 2);
       }
 }

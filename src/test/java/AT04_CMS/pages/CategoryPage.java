@@ -151,9 +151,9 @@ public class CategoryPage {
             WebUI.clickElement(buttonDelete);
             waitForPageLoaded();
             Assert.assertTrue(WebUI.checkElementDisplayed(messageDeleteSuccess),
-                        "Alert message Delete sucess is NOT displayed");
+                        "Alert message Delete success is NOT displayed");
             WebUI.assertEquals(WebUI.getWebElement(messageDeleteSuccess).getText(), excelHelper.getCellData(6, 4),
-                        "Content of message Delete sucess NOT match ");
+                        "Content of message Delete success NOT match");
       }
 
       private By listPage = By.xpath("//a[@class='page-link']");

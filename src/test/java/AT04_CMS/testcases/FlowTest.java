@@ -35,6 +35,6 @@ public class FlowTest extends BaseTest {
             System.out.println("\n ------\uD83E\uDDFE Add Product ⏩ ------ ");
             productPage = dashboardPage.navigateToProductPage();
             productPage.addNewProduct();
-            WebUI.sleep(3);
+            WebUI.waitForPageLoaded();
       }
 }

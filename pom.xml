@@ -130,29 +130,26 @@
     </dependencies>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.2.5</version>
-                    <configuration>
-                        <suiteXmlFiles>
-                            <!-- Call Suite name -->
-                            <!--<suiteXmlFile>suites/SuiteLoginTest.xml</suiteXmlFile>-->
-                        </suiteXmlFiles>
-                        <argLine>
-                            -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/1.9.22/aspectjweaver-1.9.22.jar"
-                        </argLine>
-                        <testFailureIgnore>true</testFailureIgnore>
-                        <systemPropertyVariables>
-                            <!--Đường dẫn xuất ra report-->
-                            <allure.results.directory>report/AllureReport</allure.results.directory>
-                        </systemPropertyVariables>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <suiteXmlFiles>
+                        <!-- Uncomment để chỉ định suite cụ thể khi chạy mvn test -->
+                        <!--<suiteXmlFile>src/test/resources/suite/FullTest.xml</suiteXmlFile>-->
+                    </suiteXmlFiles>
+                    <argLine>
+                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/1.9.22/aspectjweaver-1.9.22.jar"
+                    </argLine>
+                    <testFailureIgnore>true</testFailureIgnore>
+                    <systemPropertyVariables>
+                        <allure.results.directory>report/AllureReport</allure.results.directory>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
 </project>
