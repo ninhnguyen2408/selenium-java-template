@@ -9,6 +9,13 @@ on:
   schedule:
     - cron: '0 1 * * *'         # Mỗi đêm 1:00 AM UTC (8:00 AM GMT+7)
 
+# Cần quyền write để push lên gh-pages branch
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # Tránh warning Node.js 20 deprecated
+
 jobs:
   run-tests:
     name: Run Selenium Tests
@@ -36,7 +43,6 @@ jobs:
         run: mvn test -Dsurefire.suiteXmlFiles=src/test/resources/suite/CMS.xml
         continue-on-error: true
 
-      # Upload raw Allure results ngay — không phụ thuộc bước nào khác
       - name: Upload raw Allure results
         uses: actions/upload-artifact@v4
         if: always()
@@ -45,7 +51,7 @@ jobs:
           path: report/AllureReport/
           retention-days: 7
 
-      # Load lịch sử từ gh-pages để Allure có trend chart
+      # Lần đầu chạy gh-pages chưa tồn tại → continue-on-error
       - name: Load Allure history
         uses: actions/checkout@v4
         if: always()
