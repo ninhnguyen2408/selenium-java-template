@@ -8,6 +8,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 1 * * *'         # Mỗi đêm 1:00 AM UTC (8:00 AM GMT+7)
+  repository_dispatch:
+    types: [ run-automation-tests ]   # Nhận tín hiệu từ repo dự án
 
 # Cần quyền write để push lên gh-pages branch
 permissions:
