@@ -4,8 +4,11 @@ import drivers.DriverManager;
 import listeners.TestListener;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.testng.annotations.*;
 
 import java.time.Duration;
@@ -48,23 +51,46 @@ public class BaseTest {
       // Viết các hàm khởi chạy cho từng Browser đó
       private WebDriver initChromeDriver() {
             System.out.println("\n  \uD83D\uDE80 Launching Chrome browser...");
-            WebDriver driver = new ChromeDriver();
+            ChromeOptions options = new ChromeOptions();
+            if (isCI()) {
+                  options.addArguments("--headless");
+                  options.addArguments("--no-sandbox");
+                  options.addArguments("--disable-dev-shm-usage");
+                  options.addArguments("--disable-gpu");
+            }
+            WebDriver driver = new ChromeDriver(options);
             configureDriver(driver);
             return driver;
       }
 
       private WebDriver initEdgeDriver() {
             System.out.println("\uD83D\uDE80 Launching Edge browser...");
-            WebDriver driver = new EdgeDriver();
+            EdgeOptions options = new EdgeOptions();
+            if (isCI()) {
+                  options.addArguments("--headless");
+                  options.addArguments("--no-sandbox");
+                  options.addArguments("--disable-dev-shm-usage");
+                  options.addArguments("--disable-gpu");
+            }
+            WebDriver driver = new EdgeDriver(options);
             configureDriver(driver);
             return driver;
       }
 
       private WebDriver initFirefoxDriver() {
             System.out.println("\uD83D\uDE80 Launching Firefox browser...");
-            WebDriver driver = new FirefoxDriver();
+            FirefoxOptions options = new FirefoxOptions();
+            if (isCI()) {
+                  options.addArguments("--headless");
+            }
+            WebDriver driver = new FirefoxDriver(options);
             configureDriver(driver);
             return driver;
+      }
+
+      // GitHub Actions tự động set biến môi trường CI=true
+      private boolean isCI() {
+            return "true".equalsIgnoreCase(System.getenv("CI"));
       }
 
       private void configureDriver(WebDriver driver) {
