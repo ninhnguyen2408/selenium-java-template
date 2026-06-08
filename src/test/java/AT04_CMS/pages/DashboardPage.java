@@ -15,9 +15,9 @@ public class DashboardPage {
       private By menuAccount = By.xpath("//span[@class='d-flex align-items-center']");
       private By optionLogout = By.xpath("//span[normalize-space()='Logout']");
 
-      private void verifyDashboardPage() {
-            Assert.assertTrue(DriverManager.getDriver().getCurrentUrl().contains("admin"), "NOT to the Dashboard page");
+      public void verifyDashboardPage() {
             Assert.assertTrue(WebUI.checkElementDisplayed(menuDashboard), "Menu Dashboard is NOT displayed");
+            Assert.assertTrue(DriverManager.getDriver().getCurrentUrl().contains("admin"), "NOT to the Dashboard page");
             Assert.assertTrue(WebUI.checkElementDisplayed(menuAccount), "Menu Account is NOT displayed");
       }
 

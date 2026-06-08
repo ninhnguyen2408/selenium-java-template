@@ -19,13 +19,12 @@ public class LoginPage {
             WebUI.assertEquals(WebUI.getTextElement(headerPage), "Login to your account.", "NOT the Login page");
       }
 
-      public DashboardPage loginCMS(String email, String password) {
+      public void loginCMS(String email, String password) {
             navigateToLoginPage();
             WebUI.sendKeys(inputEmail, email);
             WebUI.sendKeys(inputPassword, password);
             WebUI.clickElement(buttonLogin);
             WebUI.waitForPageLoaded();
-            return new DashboardPage();
       }
 
       public DashboardPage loginCMS() {

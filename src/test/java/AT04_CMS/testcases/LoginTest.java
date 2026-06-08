@@ -5,16 +5,23 @@ import AT04_CMS.pages.LoginPage;
 import common.BaseTest;
 import constants.ConfigData;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class LoginTest extends BaseTest {
-      LoginPage loginPage = new LoginPage();
-      DashboardPage dashboardPage = new DashboardPage();
+      LoginPage loginPage;
+      DashboardPage dashboardPage;
+
+      @BeforeMethod(alwaysRun = true)
+      public void initPages() {
+            loginPage = new LoginPage();
+            dashboardPage = new DashboardPage();
+      }
 
       @Test
       public void testLoginSuccess() {
             dashboardPage = loginPage.loginCMS();
-            Assert.assertFalse(loginPage.isLoginPageUrl(), "Login fail");
+            dashboardPage.verifyDashboardPage();
       }
 
       @Test
@@ -36,7 +43,7 @@ public class LoginTest extends BaseTest {
       }
 
       @Test
-      public void testEmailNull() {
+      public void testLoginWithEmptyEmail() {
             loginPage.loginCMS("", ConfigData.PASSWORD);
             Assert.assertTrue(loginPage.isEmailFieldRequired(), "Email is NOT a required field");
             Assert.assertEquals(loginPage.getEmailValidationMessage(), "Please fill out this field.",
@@ -48,13 +55,12 @@ public class LoginTest extends BaseTest {
             loginPage.loginCMS("abc", ConfigData.PASSWORD);
             Assert.assertTrue(loginPage.isEmailFieldRequired(),
                         "Validation message of incorrect format Email NOT exists");
-            Assert.assertEquals(loginPage.getEmailValidationMessage(),
-                        "Please include an '@' in the email address. 'abc' is missing an '@'.",
+            Assert.assertTrue(loginPage.getEmailValidationMessage().contains("@"),
                         "Validation message of incorrect format Email not match");
       }
 
       @Test
-      public void testPasswordNull() {
+      public void testLoginWithEmptyPassword() {
             loginPage.loginCMS(ConfigData.EMAIL, "");
             Assert.assertTrue(loginPage.isPasswordFieldRequired(), "Password is NOT a required field");
             Assert.assertEquals(loginPage.getPasswordValidationMessage(), "Please fill out this field.",

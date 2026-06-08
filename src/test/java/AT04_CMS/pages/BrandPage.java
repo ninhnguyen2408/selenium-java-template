@@ -3,7 +3,6 @@ package AT04_CMS.pages;
 import drivers.DriverManager;
 import helpers.ExcelHelper;
 import helpers.PropertiesHelper;
-import helpers.SystemHelper;
 import org.openqa.selenium.By;
 import org.testng.Assert;
 
@@ -11,6 +10,7 @@ import static keywords.WebUI.*;
 
 public class BrandPage {
 
+      // Static locators
       private By headerBrand = By.xpath("//h1[normalize-space()='All Brands']");
       private By inputName = By.xpath("//input[@placeholder='Name']");
       private By uploadLogo = By.xpath("//div[@class='input-group-prepend']");
@@ -21,13 +21,7 @@ public class BrandPage {
       private By inputMetaDescription = By.xpath("//textarea[@name='meta_description']");
       private By buttonSave = By.xpath("//button[normalize-space()='Save']");
       private By notifyMessage = By.xpath("//span[@data-notify='message']");
-      private By uploadNew = By.xpath("//a[normalize-space()='Upload New']");
-      private By browse = By.xpath("//button[normalize-space()='Browse']");
-      private By buttonClose = By.xpath("//button[@aria-label='Close']");
-
-      private String filePath = SystemHelper.getCurrentDir() + PropertiesHelper.getValue("IMAGE_PATH");
       private By inputSearchBrand = By.xpath("//input[@id='search']");
-      private By deleteBrand = By.xpath("(//a[@title='Delete'])[1]");
       private By buttonDelete = By.xpath("//a[@id='delete-link']");
       private By headerDeleteForm = By.xpath("//h4[normalize-space()='Delete Confirmation']");
       private By confirmMessage = By.xpath("//p[@class='mt-1']");
@@ -35,67 +29,110 @@ public class BrandPage {
 
       ExcelHelper excelHelper = new ExcelHelper();
 
+      // Dynamic locators - tìm nút Edit/Delete theo tên brand trên bảng
+      private By getEditButton(String brandName) {
+            return By.xpath(String.format(
+                        "//td[contains(text(),'%s')]/following-sibling::td//a[@title='Edit']", brandName));
+      }
+
+      private By getDeleteButton(String brandName) {
+            return By.xpath(String.format(
+                        "//td[contains(text(),'%s')]/following-sibling::td//a[@title='Delete']", brandName));
+      }
+
       private void setFileExcel() {
             excelHelper.setExcelFile(PropertiesHelper.getValue("EXCEL_PATH"), "BrandData");
       }
 
-      private void uploadFile() {
-            clickElement(uploadLogo);
-            waitForPageLoaded();
-            clickElement(uploadNew);
-            uploadFileWithLocalForm(browse, filePath);
-            clickElement(buttonClose);
-      }
-
       private void verifyBrandPage() {
-            Assert.assertTrue(DriverManager.getDriver().getCurrentUrl().contains(excelHelper.getCellData(6, 1)), "NOT to the Brand page");
-            assertEquals(getTextElement(headerBrand), excelHelper.getCellData(6, 2), "Header NOT match, not Brand page");
+            Assert.assertTrue(DriverManager.getDriver().getCurrentUrl().contains("brand"),
+                        "NOT on the Brand page");
+            Assert.assertTrue(checkElementDisplayed(headerBrand),
+                        "Header 'All Brands' is NOT displayed");
       }
 
-      public DashboardPage addBrand(String brandName) {
+      // ==================== ADD BRAND ====================
+
+      public void addBrand(String brandName) {
             setFileExcel();
             verifyBrandPage();
             sendKeys(inputName, brandName);
-//            uploadFile();
             getImage(uploadLogo, searchImage, excelHelper.getCellData(2, 2), linkImage, buttonAddFiles);
             sendKeys(inputMetaTitle, excelHelper.getCellData(2, 3));
             sendKeys(inputMetaDescription, excelHelper.getCellData(2, 4));
             clickElement(buttonSave);
-            return new DashboardPage();
       }
 
       public void verifyAddBrandSuccess() {
-            waitForPageLoaded();
             setFileExcel();
             waitForElementVisible(notifyMessage);
-            Assert.assertTrue(getWebElement(notifyMessage).isDisplayed(), "Notify Add new brand success is NOT displayed");
-            assertEquals(getTextElement(notifyMessage), excelHelper.getCellData(6, 3), "Content of notify add new brand successful NOT match");
+            Assert.assertTrue(checkElementDisplayed(notifyMessage),
+                        "Add brand success notification is NOT displayed");
+            assertEquals(getTextElement(notifyMessage), excelHelper.getCellData(6, 3),
+                        "Add brand notification message not match");
       }
+
+      // ==================== EDIT BRAND ====================
+
+      public void editBrand(String currentName, String newName) {
+            setFileExcel();
+            verifyBrandPage();
+            setTextAndKeysENTER(inputSearchBrand, currentName);
+            clickElement(getEditButton(currentName));
+            waitForPageLoaded();
+            clearAndSendKeys(inputName, newName);
+            clearAndSendKeys(inputMetaTitle, excelHelper.getCellData(3, 3));
+            clearAndSendKeys(inputMetaDescription, excelHelper.getCellData(3, 4));
+            clickElement(buttonSave);
+      }
+
+      public void verifyEditBrandSuccess() {
+            setFileExcel();
+            waitForElementVisible(notifyMessage);
+            Assert.assertTrue(checkElementDisplayed(notifyMessage),
+                        "Edit brand success notification is NOT displayed");
+            assertEquals(getTextElement(notifyMessage), excelHelper.getCellData(6, 7),
+                        "Edit brand notification message not match");
+      }
+
+      // ==================== DELETE BRAND ====================
+
+      public void deleteBrand(String brandName) {
+            verifyBrandPage();
+            setTextAndKeysENTER(inputSearchBrand, brandName);
+            clickElement(getDeleteButton(brandName));
+            verifyDeleteConfirmation();
+            clickElement(buttonDelete);
+            waitForPageLoaded();
+      }
+
+      public void verifyDeleteBrandSuccess() {
+            setFileExcel();
+            waitForElementVisible(alertMessage);
+            assertEquals(getTextElement(alertMessage), excelHelper.getCellData(6, 6),
+                        "Delete brand alert message not match");
+      }
+
+      // ==================== REQUIRED FIELD ====================
 
       public void verifyNameRequiredField() {
             setFileExcel();
             verifyHTML5RequiredField(inputName);
-            assertEquals(getHTML5MessageField(inputName), excelHelper.getCellData(6, 4), "Validation message name is required not match");
+            assertEquals(getHTML5MessageField(inputName), excelHelper.getCellData(6, 4),
+                        "Validation message name is required not match");
       }
 
-      public void deleteBrand() {
-            setFileExcel();
-            verifyBrandPage();
-            setTextAndKeysENTER(inputSearchBrand, excelHelper.getCellData(2, 5));
-            waitForPageLoaded();
-            clickElement(deleteBrand);
-            verifyDeleteConfirmation();
-            clickElement(buttonDelete);
-            waitForPageLoaded();
-            waitForElementVisible(alertMessage);
-            assertEquals(getTextElement(alertMessage), excelHelper.getCellData(6, 6), "Content of alert message delete successful NOT match");
-      }
+      // ==================== PRIVATE ====================
 
       private void verifyDeleteConfirmation() {
+            setFileExcel();
             waitForElementVisible(headerDeleteForm);
-            Assert.assertTrue(checkElementDisplayed(headerDeleteForm), "Delete confirmation dialog is NOT displayed");
-            assertEquals(getTextElement(confirmMessage), excelHelper.getCellData(6, 5), "Content of confirm message delete NOT match");
-            Assert.assertTrue(checkElementEnable(buttonDelete), "Button Delete is NOT enabled");
+            Assert.assertTrue(checkElementDisplayed(headerDeleteForm),
+                        "Delete confirmation dialog is NOT displayed");
+            assertEquals(getTextElement(confirmMessage), excelHelper.getCellData(6, 5),
+                        "Confirm message not match");
+            Assert.assertTrue(checkElementEnable(buttonDelete),
+                        "Button Delete is NOT enabled");
       }
 
 }

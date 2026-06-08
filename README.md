@@ -4,6 +4,18 @@
 
 ---
 
+
+
+- Manage Brand, Manage Category, Manage Product trong Admin Page (Add, Edit, Delete,...)
+- Run full flow from: Login Admin Page > Add Brand > Add Category > Add Product
+- Check detail của 1 product vừa add trong Admin Page với thông tin bên ngoài trang User Page (View Product)
+- Search Product check Table (cột tên)
+- Logs, Reports, Video record, Screenshot case fail (Allure or Extent)
+- Parallel Execution cho toàn bộ project
+- Các thông số configs ở file Properties
+- Các data test ở file Excel (chia theo Sheet và File)"
+
+
 ## 📋 Mục lục
 
 - [Tổng quan](#-tổng-quan)
